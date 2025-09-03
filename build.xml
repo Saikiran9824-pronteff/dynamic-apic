@@ -51,17 +51,12 @@
     <tstamp>
       <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
-
-    <!-- Backup API -->
     <copy file="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"
           tofile="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
-
-    <!-- Backup Product -->
     <copy file="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"
           tofile="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
-
     <echo message="✅ Backup created: ${backup.timestamp}"/>
   </target>
 
@@ -147,9 +142,6 @@
       <arg value="--org"/>
       <arg value="indusapi-np"/>
     </exec>
-
-    <!-- ⏸ Approval Gate before publish -->
-    <echo message="⏸ Waiting for approval before publishing product..."/>
   </target>
 
   <target name="product-update" if="product.exists.true">
@@ -164,8 +156,14 @@
     </exec>
   </target>
 
+  <!-- ================== APPROVAL GATE ================== -->
+  <target name="approval-gate" depends="product-process">
+    <echo message="⏸ Waiting for approval to publish the product..."/>
+    <!-- 🔹 Stop pipeline here, Jenkins promotion will call 'publish' later -->
+  </target>
+
   <!-- ================== PUBLISH PRODUCT ================== -->
-  <target name="publish" depends="product-process">
+  <target name="publish">
     <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
@@ -179,14 +177,12 @@
       <arg value="--org"/>
       <arg value="indusapi-np"/>
     </exec>
-
-    <!-- 🔹 Run backup only after publish succeeds -->
     <antcall target="backup"/>
   </target>
 
   <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="publish">
-    <echo message="🎉 CI/CD pipeline completed successfully!"/>
+  <target name="ci" depends="approval-gate">
+    <echo message="🎉 CI/CD pipeline deployed Sucessfully."/>
   </target>
 
 </project>
