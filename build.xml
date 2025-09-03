@@ -65,27 +65,26 @@
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
 
-    <!-- Ensure we are on main branch before commit/push -->
-    <exec executable="git" failonerror="true">
-      <arg value="checkout"/>
-      <arg value="main"/>
+    <!-- Fix permissions on .git -->
+    <exec executable="chown" failonerror="true">
+      <arg value="-R"/>
+      <arg value="jenkins:jenkins"/>
+      <arg value=".git"/>
     </exec>
 
-    <!-- Stage changes -->
+    <!-- ================== GIT COMMIT & PUSH ================== -->
     <exec executable="git" failonerror="true">
       <arg value="add"/>
       <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
       <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
     </exec>
 
-    <!-- Commit -->
     <exec executable="git" failonerror="true">
       <arg value="commit"/>
       <arg value="-m"/>
       <arg value="Backup created for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
     </exec>
 
-    <!-- Push to origin main -->
     <exec executable="git" failonerror="true">
       <arg value="push"/>
       <arg value="origin"/>
