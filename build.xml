@@ -1,16 +1,10 @@
-<project name="apic-cicd" default="pipeline" basedir=".">
+<project name="apic-cicd" default="ci" basedir=".">
 
   <!-- ================== PROPERTIES ================== -->
   <property name="API_NAME" value="loan-api"/>
   <property name="API_VERSION" value="1.0.0"/>
   <property name="PRODUCT_NAME" value="loan-product"/>
   <property name="CATALOG_NAME" value="prod"/>
-
-  <!-- ================== MAIL SETTINGS ================== -->
-  <property name="mail.host" value="smtp.yourcompany.com"/>
-  <property name="mail.from" value="jenkins@yourcompany.com"/>
-  <property name="mail.to.success" value="team@yourcompany.com"/>
-  <property name="mail.to.failure" value="devops@yourcompany.com"/>
 
   <!-- ================== LOGIN ================== -->
   <target name="login">
@@ -188,48 +182,9 @@
     <antcall target="backup"/>
   </target>
 
-  <!-- ================== SUCCESS NOTIFICATION ================== -->
-  <target name="success">
-    <echo message="🎉 CI/CD pipeline completed successfully!"/>
-    <property name="build.success" value="true"/>
-    <mail mailhost="${mail.host}" subject="✅ SUCCESS: ${API_NAME}:${API_VERSION} deployed"
-          from="${mail.from}" tolist="${mail.to.success}">
-      <message>
-        The API pipeline completed successfully.
-
-        API: ${API_NAME}:${API_VERSION}
-        Product: ${PRODUCT_NAME}:${API_VERSION}
-        Catalog: ${CATALOG_NAME}
-      </message>
-    </mail>
-  </target>
-
-  <!-- ================== FAILURE NOTIFICATION ================== -->
-  <target name="failure" unless="build.success">
-    <echo message="❌ Pipeline failed! Sending email..."/>
-    <mail mailhost="${mail.host}" subject="❌ FAILURE: ${API_NAME}:${API_VERSION} pipeline"
-          from="${mail.from}" tolist="${mail.to.failure}">
-      <message>
-        The API pipeline failed ❌
-
-        Please check Jenkins logs for details.
-
-        API: ${API_NAME}:${API_VERSION}
-        Product: ${PRODUCT_NAME}:${API_VERSION}
-        Catalog: ${CATALOG_NAME}
-      </message>
-    </mail>
-  </target>
-
-  <!-- ================== PIPELINE WRAPPER ================== -->
-  <target name="pipeline">
-    <antcall target="ci"/>
-    <antcall target="failure"/>
-  </target>
-
   <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="publish,success">
-    <echo message="✅ Main CI/CD finished."/>
+  <target name="ci" depends="publish">
+    <echo message="🎉 CI/CD pipeline completed successfully!"/>
   </target>
 
 </project>
