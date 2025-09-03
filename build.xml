@@ -64,6 +64,21 @@
           overwrite="false"/>
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
+
+    <!-- Commit backup to Git -->
+    <exec executable="git" failonerror="true">
+      <arg value="add"/>
+      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+    </exec>
+
+    <exec executable="git" failonerror="true">
+      <arg value="commit"/>
+      <arg value="-m"/>
+      <arg value="Backup created for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
+    </exec>
+
+    <echo message="📂 Backup committed to Git repository."/>
   </target>
 
   <!-- ================== PROCESS API ================== -->
