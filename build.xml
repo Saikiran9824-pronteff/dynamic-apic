@@ -6,44 +6,10 @@
   <property name="PRODUCT_NAME" value="loan-product"/>
   <property name="CATALOG_NAME" value="prod"/>
 
-  <!-- ================== LOGIN ================== -->
-  <target name="login">
-    <echo message="🔐 Logging in to API Connect..."/>
-    <exec executable="apic" failonerror="true">
-      <arg value="login"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--username"/>
-      <arg value="umesh"/>
-      <arg value="--password"/>
-      <arg value="!n0r1t5@C"/>
-      <arg value="--realm"/>
-      <arg value="provider/default-idp-2"/>
-    </exec>
-  </target>
-
-  <!-- ================== VALIDATE API ================== -->
-  <target name="validate" depends="login">
-    <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
-    <exec executable="apic" failonerror="true">
-      <arg value="validate"/>
-      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
-    </exec>
-  </target>
-
-  <!-- ================== CHECK API ================== -->
-  <target name="api-check" depends="validate">
-    <echo message="🔎 Checking if API exists..."/>
-    <exec executable="apic" failonerror="false" outputproperty="api.exists">
-      <arg value="draft-apis:get"/>
-      <arg value="${API_NAME}:${API_VERSION}"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
-    </exec>
-    <echo message="API exists? ${api.exists}"/>
-  </target>
+  <!-- ================== TIMESTAMP ================== -->
+  <tstamp>
+    <format property="build.timestamp" pattern="yyyyMMdd_HHmmss"/>
+  </tstamp>
 
   <!-- ================== BACKUP ================== -->
   <target name="backup">
@@ -72,145 +38,89 @@
       <arg value=".git"/>
     </exec>
 
-    <!-- ================== GIT COMMIT & PUSH ================== -->
+    <!-- Git add -->
     <exec executable="git" failonerror="true">
       <arg value="add"/>
       <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
       <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
     </exec>
 
+    <!-- Git commit -->
     <exec executable="git" failonerror="true">
       <arg value="commit"/>
       <arg value="-m"/>
       <arg value="Backup created for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
+      <env key="GIT_COMMITTER_NAME" value="Saikiran9824-pronteff"/>
+      <env key="GIT_COMMITTER_EMAIL" value="saikiran@pronteff.com"/>
+      <env key="GIT_AUTHOR_NAME" value="Saikiran9824-pronteff"/>
+      <env key="GIT_AUTHOR_EMAIL" value="saikiran@pronteff.com"/>
     </exec>
 
+    <!-- Git push with PAT (quick test version) -->
     <exec executable="git" failonerror="true">
       <arg value="push"/>
-      <arg value="origin"/>
-      <arg value="main"/>
+      <arg value="https://Saikiran9824-pronteff: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@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
+      <arg value="HEAD:main"/>
     </exec>
   </target>
 
-  <!-- ================== PROCESS API ================== -->
-  <target name="api-process" depends="api-check">
-    <condition property="api.exists.true">
-      <and>
-        <isset property="api.exists"/>
-        <matches string="${api.exists}" pattern=".*${API_NAME}:${API_VERSION}.*"/>
-      </and>
-    </condition>
-    <antcall target="api-update"/>
-    <antcall target="api-create"/>
-  </target>
-
-  <target name="api-create" unless="api.exists.true">
-    <echo message="🆕 Creating new draft API ${API_NAME}:${API_VERSION}"/>
+  <!-- ================== VALIDATE ================== -->
+  <target name="validate">
+    <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
-      <arg value="draft-apis:create"/>
+      <arg value="validate"/>
       <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
     </exec>
-  </target>
 
-  <target name="api-update" if="api.exists.true">
-    <echo message="♻️ Updating existing draft API ${API_NAME}:${API_VERSION}"/>
+    <echo message="✅ Validating Product YAML for ${PRODUCT_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
-      <arg value="draft-apis:update"/>
-      <arg line="${API_NAME}:${API_VERSION} apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
-    </exec>
-  </target>
-
-  <!-- ================== FIX PRODUCT API REFS ================== -->
-  <target name="fix-refs" depends="api-process">
-    <echo message="🔧 Fixing API references in product YAML..."/>
-    <exec executable="bash" failonerror="true">
-      <arg value="/var/lib/jenkins/scripts/fix-refs.sh"/>
-      <arg value="products/${PRODUCT_NAME}"/>
-      <arg value="apis"/>
-    </exec>
-  </target>
-
-  <!-- ================== CHECK PRODUCT ================== -->
-  <target name="product-check" depends="fix-refs">
-    <echo message="🔎 Checking if Product exists..."/>
-    <exec executable="apic" failonerror="false" outputproperty="product.exists">
-      <arg value="draft-products:get"/>
-      <arg value="${PRODUCT_NAME}:${API_VERSION}"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
-    </exec>
-    <echo message="Product exists? ${product.exists}"/>
-  </target>
-
-  <!-- ================== PROCESS PRODUCT ================== -->
-  <target name="product-process" depends="product-check">
-    <condition property="product.exists.true">
-      <and>
-        <isset property="product.exists"/>
-        <matches string="${product.exists}" pattern=".*${PRODUCT_NAME}:${API_VERSION}.*"/>
-      </and>
-    </condition>
-    <antcall target="product-update"/>
-    <antcall target="product-create"/>
-  </target>
-
-  <target name="product-create" unless="product.exists.true">
-    <echo message="🆕 Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
-    <exec executable="apic" failonerror="true">
-      <arg value="draft-products:create"/>
+      <arg value="validate"/>
       <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
-      <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
     </exec>
   </target>
 
-  <target name="product-update" if="product.exists.true">
-    <echo message="♻️ Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
+  <!-- ================== LOGIN ================== -->
+  <target name="login">
+    <echo message="🔑 Logging into API Connect..."/>
     <exec executable="apic" failonerror="true">
-      <arg value="draft-products:update"/>
-      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="login"/>
       <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
+      <arg value="apic-server-url"/>
+      <arg value="--username"/>
+      <arg value="apic-username"/>
+      <arg value="--password"/>
+      <arg value="apic-password"/>
+      <arg value="--realm"/>
+      <arg value="provider/default-idp-1"/>
     </exec>
   </target>
 
-  <!-- ================== PUBLISH PRODUCT ================== -->
-  <target name="publish" depends="product-process">
-    <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
+  <!-- ================== PUBLISH ================== -->
+  <target name="publish" depends="login,validate">
+    <echo message="📤 Publishing API ${API_NAME}:${API_VERSION} to ${CATALOG_NAME}..."/>
     <exec executable="apic" failonerror="true">
-      <arg value="products:publish"/>
-      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
-      <arg value="--scope"/>
-      <arg value="catalog"/>
+      <arg value="publish"/>
+      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--catalog"/>
       <arg value="${CATALOG_NAME}"/>
       <arg value="--server"/>
-      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-      <arg value="--org"/>
-      <arg value="indusapi-np"/>
+      <arg value="apic-server-url"/>
     </exec>
 
-    <!-- 🔹 Run backup only after publish succeeds -->
-    <antcall target="backup"/>
+    <echo message="📤 Publishing Product ${PRODUCT_NAME}:${API_VERSION} to ${CATALOG_NAME}..."/>
+    <exec executable="apic" failonerror="true">
+      <arg value="publish"/>
+      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="--catalog"/>
+      <arg value="${CATALOG_NAME}"/>
+      <arg value="--server"/>
+      <arg value="apic-server-url"/>
+    </exec>
   </target>
 
-  <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="publish">
-    <echo message="🎉 CI/CD pipeline completed successfully!"/>
+  <!-- ================== MAIN PIPELINE ================== -->
+  <target name="ci" depends="backup,validate,publish">
+    <echo message="✅ CI Pipeline completed successfully for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION}"/>
   </target>
 
 </project>
