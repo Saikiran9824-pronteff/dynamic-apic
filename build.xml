@@ -65,24 +65,31 @@
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
 
-    <!-- ================== GIT COMMIT ================== -->
+    <!-- Ensure we are on main branch before commit/push -->
+    <exec executable="git" failonerror="true">
+      <arg value="checkout"/>
+      <arg value="main"/>
+    </exec>
+
+    <!-- Stage changes -->
     <exec executable="git" failonerror="true">
       <arg value="add"/>
       <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
       <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
     </exec>
 
+    <!-- Commit -->
     <exec executable="git" failonerror="true">
       <arg value="commit"/>
       <arg value="-m"/>
       <arg value="Backup created for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
     </exec>
 
-    <!-- Push safely from detached HEAD to remote main -->
+    <!-- Push to origin main -->
     <exec executable="git" failonerror="true">
       <arg value="push"/>
       <arg value="origin"/>
-      <arg value="HEAD:main"/>
+      <arg value="main"/>
     </exec>
   </target>
 
