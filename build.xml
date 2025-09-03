@@ -51,12 +51,17 @@
     <tstamp>
       <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
+
+    <!-- Backup API -->
     <copy file="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"
           tofile="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
+
+    <!-- Backup Product -->
     <copy file="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"
           tofile="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
+
     <echo message="✅ Backup created: ${backup.timestamp}"/>
   </target>
 
@@ -159,7 +164,6 @@
   <!-- ================== APPROVAL GATE ================== -->
   <target name="approval-gate" depends="product-process">
     <echo message="⏸ Waiting for approval to publish the product..."/>
-    <!-- 🔹 Stop pipeline here, Jenkins promotion will call 'publish' later -->
   </target>
 
   <!-- ================== PUBLISH PRODUCT ================== -->
@@ -177,12 +181,14 @@
       <arg value="--org"/>
       <arg value="indusapi-np"/>
     </exec>
+
+    <!-- 🔹 Run backup only after publish succeeds -->
     <antcall target="backup"/>
+
+    <!-- 🎉 Success only after publish -->
+    <echo message="🎉 CI/CD pipeline completed successfully!"/>
   </target>
 
   <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="approval-gate">
-    <echo message="🎉 CI/CD pipeline deployed Sucessfully."/>
-  </target>
-
+  <target name="ci" depends="approval-gate"/>
 </project>
