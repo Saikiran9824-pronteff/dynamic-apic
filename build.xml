@@ -183,7 +183,7 @@
 
   <!-- ================== CI PIPELINE ================== -->
   <target name="ci" depends="product-process">
-    <echo message="🎉 CI/CD pipeline completed successfully (publish requires approval in Jenkins)!"/>
+    <echo message="🎉 CI pipeline completed successfully (manual approval required for publish)."/>
   </target>
 
 </project>
