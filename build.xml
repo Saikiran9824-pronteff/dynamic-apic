@@ -48,7 +48,6 @@
   <!-- ================== BACKUP ================== -->
   <target name="backup">
     <echo message="📦 Backing up API &amp; Product YAMLs with timestamp..."/>
-
     <tstamp>
       <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
@@ -183,8 +182,8 @@
   </target>
 
   <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="publish">
-    <echo message="🎉 CI/CD pipeline completed successfully!"/>
+  <target name="ci" depends="product-process">
+    <echo message="🎉 CI/CD pipeline completed successfully (publish requires approval in Jenkins)!"/>
   </target>
 
 </project>
