@@ -45,7 +45,7 @@
     <echo message="API exists? ${api.exists}"/>
   </target>
 
-  <!-- ================== BACKUP ================== -->
+    <!-- ================== BACKUP ================== -->
   <target name="backup">
     <echo message="📦 Backing up API &amp; Product YAMLs with timestamp..."/>
 
@@ -64,8 +64,26 @@
           overwrite="false"/>
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
-  </target>
 
+    <!-- Git commit and push backup -->
+    <exec executable="git" dir="." failonerror="true">
+      <arg value="add"/>
+      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+    </exec>
+
+    <exec executable="git" dir="." failonerror="true">
+      <arg value="commit"/>
+      <arg value="-m"/>
+      <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
+    </exec>
+
+    <exec executable="git" dir="." failonerror="true">
+      <arg value="push"/>
+      <arg value="origin"/>
+      <arg value="main"/>
+    </exec>
+  </target>
   <!-- ================== PROCESS API ================== -->
   <target name="api-process" depends="api-check">
     <condition property="api.exists.true">
