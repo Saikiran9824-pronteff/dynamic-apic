@@ -161,8 +161,8 @@
     </exec>
   </target>
 
-  <!-- ================== PUBLISH PRODUCT ================== -->
-  <target name="publish" depends="product-process">
+  <!-- ================== PUBLISH PRODUCT (Approval Step) ================== -->
+  <target name="publish">
     <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
@@ -183,7 +183,7 @@
 
   <!-- ================== CI PIPELINE ================== -->
   <target name="ci" depends="product-process">
-    <echo message="🎉 CI pipeline completed successfully (manual approval required for publish)."/>
+    <echo message="🎉 CI/CD pipeline completed successfully (publish requires approval in Jenkins)!"/>
   </target>
 
 </project>
