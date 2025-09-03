@@ -65,19 +65,7 @@
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
 
-    <!-- ================== GIT COMMIT & PUSH ================== -->
-    <exec executable="git" failonerror="true">
-      <arg value="config"/>
-      <arg value="user.name"/>
-      <arg value="Saikiran9824-pronteff"/>
-    </exec>
-
-    <exec executable="git" failonerror="true">
-      <arg value="config"/>
-      <arg value="user.email"/>
-      <arg value="saikiran@pronteff.com"/>
-    </exec>
-
+    <!-- ================== GIT COMMIT ================== -->
     <exec executable="git" failonerror="true">
       <arg value="add"/>
       <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
@@ -90,10 +78,11 @@
       <arg value="Backup created for ${API_NAME}:${API_VERSION} and ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
     </exec>
 
+    <!-- Push safely from detached HEAD to remote main -->
     <exec executable="git" failonerror="true">
       <arg value="push"/>
       <arg value="origin"/>
-      <arg value="main"/>
+      <arg value="HEAD:main"/>
     </exec>
   </target>
 
