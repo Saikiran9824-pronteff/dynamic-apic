@@ -231,8 +231,8 @@
       <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${BACKUP_TIMESTAMP}"/>
     </exec>
 
-    <!-- Set Git remote with token -->
-    <property name="GIT_REMOTE" value="https://${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
+    <!-- Set Git remote     <property name="GIT_REMOTE" value="https://${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/> with token -->
+    <property name="GIT_REMOTE" value="https://${GIT_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
     <exec executable="git" failonerror="true">
       <arg value="remote"/>
       <arg value="set-url"/>
