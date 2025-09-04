@@ -232,13 +232,14 @@
     </exec>
 
     <!-- Set Git remote     <property name="GIT_REMOTE" value="https://${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/> with token -->
-    <property name="GIT_REMOTE" value="https://${GIT_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
-    <exec executable="git" failonerror="true">
-      <arg value="remote"/>
-      <arg value="set-url"/>
-      <arg value="origin"/>
-      <arg value="${GIT_REMOTE}"/>
-    </exec>
+<!--  Set Git remote with token (so push works)  -->
+<property name="GIT_REMOTE" value="https://${env.GIT_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
+<exec executable="git" failonerror="true">
+  <arg value="remote"/>
+  <arg value="set-url"/>
+  <arg value="origin"/>
+  <arg value="${GIT_REMOTE}"/>
+</exec>
 
     <!-- Push backup -->
     <echo message="⬆️ Pushing backup to branch main"/>
