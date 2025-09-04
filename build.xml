@@ -31,7 +31,7 @@
     <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="validate"/>
-      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${basedir}/apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
     </exec>
   </target>
 
@@ -56,21 +56,19 @@
       <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
 
-    <!-- Ensure backup directories exist -->
-    <mkdir dir="apis/${API_FOLDER}/API_BACKUP"/>
-    <mkdir dir="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
-
     <!-- Backup API -->
-    <copy file="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <mkdir dir="${basedir}/apis/${API_FOLDER}/API_BACKUP"/>
+    <copy file="${basedir}/apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
+          tofile="${basedir}/apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <!-- Backup Product -->
-    <copy file="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <mkdir dir="${basedir}/products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
+    <copy file="${basedir}/products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
+          tofile="${basedir}/products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
-    <echo message="✅ Backup created at ${backup.timestamp} into API_BACKUP/ and PRODUCT_BACKUP/ folders"/>
+    <echo message="✅ Backup created: ${backup.timestamp}"/>
   </target>
 
   <!-- ================== PROCESS API ================== -->
@@ -89,7 +87,7 @@
     <echo message="🆕 Creating new draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:create"/>
-      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${basedir}/apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -101,7 +99,7 @@
     <echo message="♻️ Updating existing draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:update"/>
-      <arg line="${API_NAME}:${API_VERSION} apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${API_NAME}:${API_VERSION} ${basedir}/apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -114,8 +112,8 @@
     <echo message="🔧 Fixing API references in product YAML..."/>
     <exec executable="bash" failonerror="true">
       <arg value="/var/lib/jenkins/scripts/fix-refs.sh"/>
-      <arg value="products/${PRODUCT_FOLDER}"/>
-      <arg value="apis"/>
+      <arg value="${basedir}/products/${PRODUCT_FOLDER}"/>
+      <arg value="${basedir}/apis"/>
     </exec>
   </target>
 
@@ -149,7 +147,7 @@
     <echo message="🆕 Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:create"/>
-      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${basedir}/products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -161,7 +159,7 @@
     <echo message="♻️ Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:update"/>
-      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${PRODUCT_NAME}:${API_VERSION} ${basedir}/products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -179,7 +177,7 @@
     <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
-      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${basedir}/products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--scope"/>
       <arg value="catalog"/>
       <arg value="--catalog"/>
