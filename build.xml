@@ -56,17 +56,21 @@
       <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
 
+    <!-- Ensure backup directories exist -->
+    <mkdir dir="apis/${API_FOLDER}/API_BACKUP"/>
+    <mkdir dir="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
+
     <!-- Backup API -->
     <copy file="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+          tofile="apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <!-- Backup Product -->
     <copy file="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+          tofile="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
-    <echo message="✅ Backup created: ${backup.timestamp}"/>
+    <echo message="✅ Backup created at ${backup.timestamp} into API_BACKUP/ and PRODUCT_BACKUP/ folders"/>
   </target>
 
   <!-- ================== PROCESS API ================== -->
