@@ -196,6 +196,7 @@
     <echo message="Backup completed and pushed at ${backup.timestamp}"/>
 </target>
 
+
   <!-- ================== CI PIPELINE ================== -->
   <target name="ci" depends="backup">
     <echo message="CI/CD pipeline completed successfully!"/>
