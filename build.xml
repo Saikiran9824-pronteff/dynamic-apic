@@ -10,6 +10,10 @@
   <property name="PRODUCT_NAME" value="ekyc"/>        <!-- product name -->
   <property name="CATALOG_NAME" value="prod"/>
 
+  <!-- Convenience props for file paths -->
+  <property name="API_FILE" value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+  <property name="PRODUCT_FILE" value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+
   <!-- ================== LOGIN ================== -->
   <target name="login">
     <echo message="🔐 Logging in to API Connect..."/>
@@ -31,7 +35,7 @@
     <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="validate"/>
-      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${API_FILE}"/>
     </exec>
   </target>
 
@@ -47,30 +51,6 @@
       <arg value="indusapi-np"/>
     </exec>
     <echo message="API exists? ${api.exists}"/>
-  </target>
-
-  <!-- ================== BACKUP ================== -->
-  <target name="backup">
-    <echo message="📦 Backing up API &amp; Product YAMLs with timestamp..."/>
-    <tstamp>
-      <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
-    </tstamp>
-
-    <!-- Ensure backup directories exist -->
-    <mkdir dir="apis/${API_FOLDER}/API_BACKUP"/>
-    <mkdir dir="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
-
-    <!-- Backup API -->
-    <copy file="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
-          overwrite="false"/>
-
-    <!-- Backup Product -->
-    <copy file="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
-          overwrite="false"/>
-
-    <echo message="✅ Backup created at ${backup.timestamp} into API_BACKUP/ and PRODUCT_BACKUP/ folders"/>
   </target>
 
   <!-- ================== PROCESS API ================== -->
@@ -89,7 +69,7 @@
     <echo message="🆕 Creating new draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:create"/>
-      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${API_FILE}"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -101,7 +81,7 @@
     <echo message="♻️ Updating existing draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:update"/>
-      <arg line="${API_NAME}:${API_VERSION} apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${API_NAME}:${API_VERSION} ${API_FILE}"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -149,7 +129,7 @@
     <echo message="🆕 Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:create"/>
-      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${PRODUCT_FILE}"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -161,7 +141,7 @@
     <echo message="♻️ Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:update"/>
-      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${PRODUCT_NAME}:${API_VERSION} ${PRODUCT_FILE}"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -176,10 +156,10 @@
 
   <!-- ================== PUBLISH PRODUCT ================== -->
   <target name="publish">
-    <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
+    <echo message="🚀 Publishing Product ${PRODUCT_FILE} to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
-      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${PRODUCT_FILE}"/>
       <arg value="--scope"/>
       <arg value="catalog"/>
       <arg value="--catalog"/>
@@ -195,6 +175,46 @@
 
     <!-- 🎉 Success only after publish -->
     <echo message="🎉 CI/CD pipeline completed successfully!"/>
+  </target>
+
+  <!-- ================== BACKUP ================== -->
+  <target name="backup">
+    <echo message="💾 Backing up API and Product definitions..."/>
+    <!-- Create timestamp variable -->
+    <tstamp>
+      <format property="BACKUP_TIMESTAMP" pattern="yyyyMMdd_HHmmss"/>
+    </tstamp>
+    <!-- Define base directories -->
+    <property name="API_BASE_DIR" value="apis/${API_NAME}"/>
+    <property name="PRODUCT_BASE_DIR" value="products/${PRODUCT_NAME}"/>
+    <!-- Backup folders -->
+    <property name="API_BACKUP_DIR" value="${API_BASE_DIR}/api_backup/${BACKUP_TIMESTAMP}"/>
+    <property name="PRODUCT_BACKUP_DIR" value="${PRODUCT_BASE_DIR}/product_backup/${BACKUP_TIMESTAMP}"/>
+    <!-- Create dirs -->
+    <mkdir dir="${API_BACKUP_DIR}"/>
+    <mkdir dir="${PRODUCT_BACKUP_DIR}"/>
+    <!-- Copy files -->
+    <copy file="${API_FILE}" todir="${API_BACKUP_DIR}" overwrite="true"/>
+    <copy file="${PRODUCT_FILE}" todir="${PRODUCT_BACKUP_DIR}" overwrite="true"/>
+    <!-- Git stage -->
+    <exec executable="git" failonerror="true">
+      <arg value="add"/>
+      <arg value="${API_BACKUP_DIR}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="${PRODUCT_BACKUP_DIR}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+    </exec>
+    <!-- Commit -->
+    <exec executable="git" failonerror="true">
+      <arg value="commit"/>
+      <arg value="-m"/>
+      <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${BACKUP_TIMESTAMP}"/>
+    </exec>
+    <!-- Push -->
+    <echo message="⬆️ Pushing backup to branch main"/>
+    <exec executable="git" failonerror="true">
+      <arg value="push"/>
+      <arg value="https://${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
+      <arg value="HEAD:main"/>
+    </exec>
   </target>
 
   <!-- ================== CI PIPELINE ================== -->
