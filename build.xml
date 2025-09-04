@@ -204,6 +204,7 @@
       <arg value="https://${env.GITHUB_USERNAME}:${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/um-dynamic.git"/>
       <arg value="HEAD:main"/>
     </exec>
+
     <echo message="✅ Backup completed and pushed at ${backup.timestamp}"/>
   </target>
 
@@ -211,4 +212,5 @@
   <target name="ci" depends="backup">
     <echo message=":tada: CI/CD pipeline completed successfully!"/>
   </target>
+
 </project>
