@@ -199,15 +199,18 @@
     <arg value="jenkins@yourcompany.com"/>
   </exec>
 
+  <!-- Create timestamp variable -->
+  <tstamp>
+    <format property="BACKUP_TIMESTAMP" pattern="yyyyMMdd_HHmmss"/>
+  </tstamp>
+
   <!-- Backup directories -->
-  <property name="API_BASE_DIR" value="apis/${API_NAME}"/>
-  <property name="PRODUCT_BASE_DIR" value="products/${PRODUCT_NAME}"/>
-  <property name="API_BACKUP_DIR" value="${API_BASE_DIR}/api_backup/${BACKUP_TIMESTAMP}"/>
-  <property name="PRODUCT_BACKUP_DIR" value="${PRODUCT_BASE_DIR}/product_backup/${BACKUP_TIMESTAMP}"/>
+  <property name="API_BACKUP_DIR" value="apis/${API_NAME}/api_backup/${BACKUP_TIMESTAMP}"/>
+  <property name="PRODUCT_BACKUP_DIR" value="products/${PRODUCT_NAME}/product_backup/${BACKUP_TIMESTAMP}"/>
   <mkdir dir="${API_BACKUP_DIR}"/>
   <mkdir dir="${PRODUCT_BACKUP_DIR}"/>
 
-  <!-- Copy files -->
+  <!-- Copy API and Product YAMLs -->
   <copy file="${API_FILE}" todir="${API_BACKUP_DIR}" overwrite="true"/>
   <copy file="${PRODUCT_FILE}" todir="${PRODUCT_BACKUP_DIR}" overwrite="true"/>
 
@@ -225,7 +228,7 @@
     <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${BACKUP_TIMESTAMP}"/>
   </exec>
 
-  <!-- Set Git remote with token (so push works) -->
+  <!-- Set Git remote with token -->
   <property name="GIT_REMOTE" value="https://${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/dynamic-apic.git"/>
   <exec executable="git" failonerror="true">
     <arg value="remote"/>
@@ -242,6 +245,7 @@
     <arg value="HEAD:main"/>
   </exec>
 </target>
+
 
   <!-- ================== CI PIPELINE ================== -->
   <target name="ci" depends="publish"/>
