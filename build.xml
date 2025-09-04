@@ -1,19 +1,18 @@
 <project name="apic-cicd" default="ci" basedir=".">
 
   <!-- ================== PROPERTIES ================== -->
-  <property name="API_NAME" value="loan-api"/>
+  <!-- These can be overridden from Jenkins parameters -->
+  <property name="API_FOLDER" value="ekyc"/>          <!-- category folder -->
+  <property name="API_NAME" value="ekyc-biometric"/>  <!-- actual API name -->
   <property name="API_VERSION" value="1.0.0"/>
-  <property name="PRODUCT_NAME" value="loan-product"/>
-  <property name="CATALOG_NAME" value="prod"/>
-  <property environment="env"/>
 
-  <tstamp>
-    <format property="backup.timestamp" pattern="yyyyMMddHHmmss"/>
-  </tstamp>
+  <property name="PRODUCT_FOLDER" value="ekyc"/>      <!-- product folder -->
+  <property name="PRODUCT_NAME" value="ekyc"/>        <!-- product name -->
+  <property name="CATALOG_NAME" value="prod"/>
 
   <!-- ================== LOGIN ================== -->
   <target name="login">
-    <echo message="Logging in to API Connect..."/>
+    <echo message="🔐 Logging in to API Connect..."/>
     <exec executable="apic" failonerror="true">
       <arg value="login"/>
       <arg value="--server"/>
@@ -29,16 +28,16 @@
 
   <!-- ================== VALIDATE API ================== -->
   <target name="validate" depends="login">
-    <echo message="Validating API YAML for ${API_NAME}_${API_VERSION}"/>
+    <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="validate"/>
-      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
     </exec>
   </target>
 
   <!-- ================== CHECK API ================== -->
   <target name="api-check" depends="validate">
-    <echo message="Checking if API exists..."/>
+    <echo message="🔎 Checking if API exists..."/>
     <exec executable="apic" failonerror="false" outputproperty="api.exists">
       <arg value="draft-apis:get"/>
       <arg value="${API_NAME}:${API_VERSION}"/>
@@ -48,6 +47,30 @@
       <arg value="indusapi-np"/>
     </exec>
     <echo message="API exists? ${api.exists}"/>
+  </target>
+
+  <!-- ================== BACKUP ================== -->
+  <target name="backup">
+    <echo message="📦 Backing up API &amp; Product YAMLs with timestamp..."/>
+    <tstamp>
+      <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
+    </tstamp>
+
+    <!-- Ensure backup directories exist -->
+    <mkdir dir="apis/${API_FOLDER}/API_BACKUP"/>
+    <mkdir dir="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
+
+    <!-- Backup API -->
+    <copy file="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
+          tofile="apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+          overwrite="false"/>
+
+    <!-- Backup Product -->
+    <copy file="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
+          tofile="products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+          overwrite="false"/>
+
+    <echo message="✅ Backup created at ${backup.timestamp} into API_BACKUP/ and PRODUCT_BACKUP/ folders"/>
   </target>
 
   <!-- ================== PROCESS API ================== -->
@@ -63,10 +86,10 @@
   </target>
 
   <target name="api-create" unless="api.exists.true">
-    <echo message="Creating new draft API ${API_NAME}:${API_VERSION}"/>
+    <echo message="🆕 Creating new draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:create"/>
-      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -75,10 +98,10 @@
   </target>
 
   <target name="api-update" if="api.exists.true">
-    <echo message="Updating existing draft API ${API_NAME}:${API_VERSION}"/>
+    <echo message="♻️ Updating existing draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:update"/>
-      <arg line="${API_NAME}:${API_VERSION} apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${API_NAME}:${API_VERSION} apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -88,17 +111,17 @@
 
   <!-- ================== FIX PRODUCT API REFS ================== -->
   <target name="fix-refs" depends="api-process">
-    <echo message="Fixing API references in product YAML..."/>
+    <echo message="🔧 Fixing API references in product YAML..."/>
     <exec executable="bash" failonerror="true">
       <arg value="/var/lib/jenkins/scripts/fix-refs.sh"/>
-      <arg value="products/${PRODUCT_NAME}"/>
+      <arg value="products/${PRODUCT_FOLDER}"/>
       <arg value="apis"/>
     </exec>
   </target>
 
   <!-- ================== CHECK PRODUCT ================== -->
   <target name="product-check" depends="fix-refs">
-    <echo message="Checking if Product exists..."/>
+    <echo message="🔎 Checking if Product exists..."/>
     <exec executable="apic" failonerror="false" outputproperty="product.exists">
       <arg value="draft-products:get"/>
       <arg value="${PRODUCT_NAME}:${API_VERSION}"/>
@@ -123,10 +146,10 @@
   </target>
 
   <target name="product-create" unless="product.exists.true">
-    <echo message="Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
+    <echo message="🆕 Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:create"/>
-      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -135,10 +158,10 @@
   </target>
 
   <target name="product-update" if="product.exists.true">
-    <echo message="Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
+    <echo message="♻️ Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:update"/>
-      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -146,12 +169,17 @@
     </exec>
   </target>
 
+  <!-- ================== APPROVAL GATE ================== -->
+  <target name="approval-gate" depends="product-process">
+    <echo message="⏸ Waiting for approval to publish the product..."/>
+  </target>
+
   <!-- ================== PUBLISH PRODUCT ================== -->
-  <target name="publish" depends="product-process">
-    <echo message="Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
+  <target name="publish">
+    <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
-      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--scope"/>
       <arg value="catalog"/>
       <arg value="--catalog"/>
@@ -161,45 +189,14 @@
       <arg value="--org"/>
       <arg value="indusapi-np"/>
     </exec>
+
+    <!-- 🔹 Run backup only after publish succeeds -->
+    <antcall target="backup"/>
+
+    <!-- 🎉 Success only after publish -->
+    <echo message="🎉 CI/CD pipeline completed successfully!"/>
   </target>
-
-  <!-- ================== BACKUP ================== -->
-<target name="backup" depends="publish">
-    <echo message="Backing up API &amp; Product YAMLs with timestamp..."/>
-    <tstamp>
-      <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
-    </tstamp>
-
-    <mkdir dir="${basedir}/apis/${API_NAME}/API_BACKUP"/>
-    <copy file="${basedir}/apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="${basedir}/apis/${API_NAME}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
-          overwrite="false"/>
-
-    <mkdir dir="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP"/>
-    <copy file="${basedir}/products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
-          overwrite="false"/>
-
-    <exec executable="git" failonerror="true">
-        <arg line='add ${basedir}/apis/${API_NAME}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml ${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml'/>
-    </exec>
-
-    <exec executable="git" failonerror="true">
-        <arg line='commit -m "Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"'/>
-    </exec>
-
-    <echo message="Pushing backup to GitHub..."/>
-    <exec executable="git" failonerror="true">
-        <arg line='push origin main'/>
-    </exec>
-
-    <echo message="Backup completed and pushed at ${backup.timestamp}"/>
-</target>
-
 
   <!-- ================== CI PIPELINE ================== -->
-  <target name="ci" depends="backup">
-    <echo message="CI/CD pipeline completed successfully!"/>
-  </target>
-
+  <target name="ci" depends="approval-gate"/>
 </project>
