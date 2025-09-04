@@ -1,9 +1,10 @@
 <project name="apic-cicd" default="ci" basedir=".">
+
   <!-- ================== PROPERTIES ================== -->
-  <property name="default.API_NAME" value="loan-api"/>
-  <property name="default.API_VERSION" value="1.0.0"/>
-  <property name="default.PRODUCT_NAME" value="loan-product"/>
-  <property name="default.CATALOG_NAME" value="prod"/>
+  <property name="API_NAME" value="loan-api"/>
+  <property name="API_VERSION" value="1.0.0"/>
+  <property name="PRODUCT_NAME" value="loan-product"/>
+  <property name="CATALOG_NAME" value="prod"/>
 
   <property environment="env"/>
 
@@ -146,69 +147,70 @@
     </exec>
   </target>
 
-<!-- ================== PUBLISH PRODUCT ================== -->
-<target name="publish" depends="product-process">
+  <!-- ================== PUBLISH PRODUCT ================== -->
+  <target name="publish" depends="product-process">
     <echo message=":rocket: Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
-        <arg value="products:publish"/>
-        <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
-        <arg value="--scope"/>
-        <arg value="catalog"/>
-        <arg value="--catalog"/>
-        <arg value="${CATALOG_NAME}"/>
-        <arg value="--server"/>
-        <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
-        <arg value="--org"/>
-        <arg value="indusapi-np"/>
+      <arg value="products:publish"/>
+      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="--scope"/>
+      <arg value="catalog"/>
+      <arg value="--catalog"/>
+      <arg value="${CATALOG_NAME}"/>
+      <arg value="--server"/>
+      <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
+      <arg value="--org"/>
+      <arg value="indusapi-np"/>
     </exec>
-</target>
+  </target>
 
-<!-- ================== BACKUP ================== -->
-<target name="backup">
+  <!-- ================== BACKUP ================== -->
+  <target name="backup" depends="publish">
     <echo message="📦 Backing up API &amp; Product YAMLs with timestamp..."/>
     <tstamp>
-        <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
+      <format property="backup.timestamp" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
 
     <!-- Backup API -->
-    <mkdir dir="${basedir}/apis/${API_FOLDER}/API_BACKUP"/>
-    <copy file="${basedir}/apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="${basedir}/apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <mkdir dir="${basedir}/apis/${API_NAME}/API_BACKUP"/>
+    <copy file="${basedir}/apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"
+          tofile="${basedir}/apis/${API_NAME}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <!-- Backup Product -->
-    <mkdir dir="${basedir}/products/${PRODUCT_FOLDER}/PRODUCT_BACKUP"/>
-    <copy file="${basedir}/products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="${basedir}/products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <mkdir dir="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP"/>
+    <copy file="${basedir}/products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"
+          tofile="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <!-- Git add -->
     <exec executable="git" failonerror="true">
-        <arg value="add"/>
-        <arg value="${basedir}/apis/${API_FOLDER}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
-        <arg value="${basedir}/products/${PRODUCT_FOLDER}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+      <arg value="add"/>
+      <arg value="${basedir}/apis/${API_NAME}/API_BACKUP/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
+      <arg value="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
     </exec>
 
     <!-- Git commit -->
     <exec executable="git" failonerror="true">
-        <arg value="commit"/>
-        <arg value="-m"/>
-        <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
+      <arg value="commit"/>
+      <arg value="-m"/>
+      <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
     </exec>
 
     <!-- Git push using Jenkins credentials stored as env vars -->
     <echo message="⬆️ Pushing backup to GitHub using PAT..."/>
     <exec executable="git" failonerror="true">
-        <arg value="push"/>
-        <arg value="https://${env.GITHUB_USERNAME}:${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/um-dynamic.git"/>
-        <arg value="HEAD:main"/>
+      <arg value="push"/>
+      <arg value="https://${env.GITHUB_USERNAME}:${env.GITHUB_TOKEN}@github.com/Saikiran9824-pronteff/um-dynamic.git"/>
+      <arg value="HEAD:main"/>
     </exec>
 
     <echo message="✅ Backup completed and pushed at ${backup.timestamp}"/>
-</target>
+  </target>
 
-
-<!-- ================== CI PIPELINE ================== -->
-<target name="ci" depends="backup">
+  <!-- ================== CI PIPELINE ================== -->
+  <target name="ci" depends="backup">
     <echo message=":tada: CI/CD pipeline completed successfully!"/>
-</target>
+  </target>
+
+</project>
