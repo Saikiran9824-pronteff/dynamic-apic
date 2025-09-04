@@ -1,7 +1,9 @@
 <project name="apic-cicd" default="ci" basedir=".">
 
   <!-- ================== PROPERTIES ================== -->
-  <property name="API_NAME" value="loan-api"/>
+  <!-- These can be overridden from Jenkins parameters -->
+  <property name="API_FOLDER" value="ekyc"/>         <!-- category folder -->
+  <property name="API_NAME" value="ekyc-biometric"/> <!-- actual API name -->
   <property name="API_VERSION" value="1.0.0"/>
   <property name="PRODUCT_NAME" value="loan-product"/>
   <property name="CATALOG_NAME" value="prod"/>
@@ -27,7 +29,7 @@
     <echo message="✅ Validating API YAML for ${API_NAME}_${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="validate"/>
-      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
     </exec>
   </target>
 
@@ -53,8 +55,8 @@
     </tstamp>
 
     <!-- Backup API -->
-    <copy file="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"
-          tofile="apis/${API_NAME}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <copy file="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"
+          tofile="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <!-- Backup Product -->
@@ -81,7 +83,7 @@
     <echo message="🆕 Creating new draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:create"/>
-      <arg value="apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg value="apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -93,7 +95,7 @@
     <echo message="♻️ Updating existing draft API ${API_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-apis:update"/>
-      <arg line="${API_NAME}:${API_VERSION} apis/${API_NAME}/${API_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${API_NAME}:${API_VERSION} apis/${API_FOLDER}/${API_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
