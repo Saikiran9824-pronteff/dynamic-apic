@@ -2,10 +2,12 @@
 
   <!-- ================== PROPERTIES ================== -->
   <!-- These can be overridden from Jenkins parameters -->
-  <property name="API_FOLDER" value="ekyc"/>         <!-- category folder -->
-  <property name="API_NAME" value="ekyc-biometric"/> <!-- actual API name -->
+  <property name="API_FOLDER" value="ekyc"/>          <!-- category folder -->
+  <property name="API_NAME" value="ekyc-biometric"/>  <!-- actual API name -->
   <property name="API_VERSION" value="1.0.0"/>
-  <property name="PRODUCT_NAME" value="loan-product"/>
+
+  <property name="PRODUCT_FOLDER" value="ekyc"/>      <!-- product folder -->
+  <property name="PRODUCT_NAME" value="ekyc"/>        <!-- product name -->
   <property name="CATALOG_NAME" value="prod"/>
 
   <!-- ================== LOGIN ================== -->
@@ -60,8 +62,8 @@
           overwrite="false"/>
 
     <!-- Backup Product -->
-    <copy file="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"
-          tofile="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
+    <copy file="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"
+          tofile="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"
           overwrite="false"/>
 
     <echo message="✅ Backup created: ${backup.timestamp}"/>
@@ -108,7 +110,7 @@
     <echo message="🔧 Fixing API references in product YAML..."/>
     <exec executable="bash" failonerror="true">
       <arg value="/var/lib/jenkins/scripts/fix-refs.sh"/>
-      <arg value="products/${PRODUCT_NAME}"/>
+      <arg value="products/${PRODUCT_FOLDER}"/>
       <arg value="apis"/>
     </exec>
   </target>
@@ -143,7 +145,7 @@
     <echo message="🆕 Creating new draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:create"/>
-      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -155,7 +157,7 @@
     <echo message="♻️ Updating existing draft Product ${PRODUCT_NAME}:${API_VERSION}"/>
     <exec executable="apic" failonerror="true">
       <arg value="draft-products:update"/>
-      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg line="${PRODUCT_NAME}:${API_VERSION} products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--server"/>
       <arg value="https://small-1-mgmt-api-manager-cp4i.apps.ocp.prontefflabs.com"/>
       <arg value="--org"/>
@@ -173,7 +175,7 @@
     <echo message="🚀 Publishing Product ${PRODUCT_NAME}_${API_VERSION}.yaml to catalog ${CATALOG_NAME}"/>
     <exec executable="apic" failonerror="true">
       <arg value="products:publish"/>
-      <arg value="products/${PRODUCT_NAME}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
+      <arg value="products/${PRODUCT_FOLDER}/${PRODUCT_NAME}_${API_VERSION}.yaml"/>
       <arg value="--scope"/>
       <arg value="catalog"/>
       <arg value="--catalog"/>
