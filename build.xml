@@ -186,10 +186,10 @@
       <arg value="${basedir}/products/${PRODUCT_NAME}/PRODUCT_BACKUP/${PRODUCT_NAME}_${API_VERSION}_${backup.timestamp}.yaml"/>
     </exec>
 
+    <!-- Use CDATA for commit message to avoid XML parsing issues -->
     <exec executable="git" failonerror="true">
       <arg value="commit"/>
-      <arg value="-m"/>
-      <arg value="Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"/>
+      <arg><![CDATA[-m "Backup API ${API_NAME}:${API_VERSION} and Product ${PRODUCT_NAME}:${API_VERSION} at ${backup.timestamp}"]]></arg>
     </exec>
 
     <echo message="Pushing backup to GitHub..."/>
